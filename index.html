@@ -41,7 +41,7 @@
         }
         
         #info { 
-            font-size: 14px; 
+            font-size: 13px; 
             line-height: 1.3;
             max-width: 60%; 
             font-weight: 500;
@@ -76,6 +76,7 @@
 <script>
     // Ініціалізація Telegram WebApp
     const tg = window.Telegram.WebApp;
+    tg.ready();
     tg.expand(); // Розгортаємо вікно на весь екран
 
     // Зчитуємо країну з параметрів URL (наприклад, ?country=Spain)
@@ -109,11 +110,11 @@
             .catch(err => console.log('Помилка визначення центру країни:', err));
     }
 
-    // Обробник клика по карті
+    // Обробник кліка по карті
     map.on('click', function(e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
-        selectedCoords = { lat, lng };
+        selectedCoords = { latitude: lat, longitude: lng };
 
         if (selectedMarker) {
             selectedMarker.setLatLng(e.latlng);
@@ -121,17 +122,14 @@
             selectedMarker = L.marker(e.latlng).addTo(map);
         }
 
-        document.getElementById('info').innerHTML = `📍 **Обрано координати:**<br>${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        document.getElementById('info').innerHTML = `📍 <b>Обрано координати:</b><br>${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         document.getElementById('confirm-btn').disabled = false;
     });
 
     // Відправка вибраних координат назад у Telegram-бот
     function sendData() {
         if (selectedCoords) {
-            tg.sendData(JSON.stringify({
-                latitude: selectedCoords.lat,
-                longitude: selectedCoords.lng
-            }));
+            tg.sendData(JSON.stringify(selectedCoords));
             tg.close();
         }
     }
