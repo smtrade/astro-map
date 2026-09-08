@@ -8,7 +8,7 @@
     <!-- Telegram WebApp SDK -->
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     
-    <!-- Leaflet.js -->
+    <!-- Leaflet.js (Інтерактивна карта OpenStreetMap) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     
@@ -55,20 +55,24 @@
 </div>
 
 <script>
+    // Ініціалізація Telegram WebApp SDK
     const tg = window.Telegram.WebApp;
     tg.ready();
     tg.expand();
 
-    // Налаштовуємо нативну кнопку Telegram
+    // Налаштування нативної кнопки Telegram
     tg.MainButton.setText("ПІДТВЕРДИТИ ЛОКАЦІЮ");
     tg.MainButton.hide();
 
+    // Зчитуємо назву країни з URL-параметрів (?country=...)
     const urlParams = new URLSearchParams(window.location.search);
     const countryName = urlParams.get('country') || 'Україна';
 
+    // Створюємо карту Leaflet (за замовчуванням центр України)
     const map = L.map('map', { zoomControl: false }).setView([48.3794, 31.1656], 6);
     L.control.zoom({ position: 'topright' }).addTo(map);
 
+    // Шар OpenStreetMap
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         maxZoom: 18,
         attribution: '© OpenStreetMap'
@@ -77,6 +81,7 @@
     let selectedMarker = null;
     let selectedCoords = null;
 
+    // Автоматичне фокусування карти на обраній країні
     if (countryName) {
         fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(countryName)}`)
             .then(res => res.json())
@@ -87,10 +92,10 @@
                     map.setView([lat, lon], 6);
                 }
             })
-            .catch(err => console.log(err));
+            .catch(err => console.log('Помилка визначення центру країни:', err));
     }
 
-    // Обробник кліка по карті
+    // Обробник вибору точки на карті
     map.on('click', function(e) {
         const lat = e.latlng.lat;
         const lng = e.latlng.lng;
@@ -102,16 +107,17 @@
             selectedMarker = L.marker(e.latlng).addTo(map);
         }
 
-        document.getElementById('info').innerHTML = `📍 Координати: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+        document.getElementById('info').innerHTML = `📍 **Координати:** ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
         
-        // Показуємо нативну кнопку Telegram знизу екрана
+        // Показуємо нативну кнопку Telegram знизу
         tg.MainButton.show();
     });
 
-    // При натисканні на нативну кнопку надсилаємо дані
+    // Натискання на нативну кнопку Telegram -> надсилаємо JSON та закриваємо WebApp
     tg.onEvent('mainButtonClicked', function() {
         if (selectedCoords) {
             tg.sendData(JSON.stringify(selectedCoords));
+            tg.close(); // Обов'язково закриваємо вікно після відправки
         }
     });
 </script>
